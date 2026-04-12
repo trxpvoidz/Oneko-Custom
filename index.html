@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Oneko Playground</title>
+
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Oneko Playground - test and customize your oneko.js textures and animations">
+
+  <style>
+    body {
+      background: url(https://frail.lol/_next/image?url=https%3A%2F%2Fcdn.frail.lol%2Fbackgrounds%2F461%2F1f1860c1-b980-4215-855d-07ec8960d764.jpeg&w=3840&q=75) no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      font-family: 'Raleway', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    #ui {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #panel {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 999999;
+      background: rgba(0,0,0,0.85);
+      padding: 10px;
+      border-radius: 10px;
+      width: 260px;
+    }
+
+    #panel button {
+      background-color: #000000;
+      color: #fff;
+      width: 100%;
+      margin: 6px 0;
+      padding: 5px;
+      border: none;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+
+    #panel button:hover {
+      box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 40px rgb(255, 255, 255);
+    }
+
+    #panel input {
+      width: 100%;
+      margin: 6px 0;
+      padding: 3px;
+      border: none;
+      border-radius: 6px;
+    }
+
+    #oneko {
+      width: 32px;
+      height: 32px;
+      position: fixed;
+      pointer-events: none;
+      image-rendering: pixelated;
+      z-index: 999999;
+    }
+
+    * {
+      cursor: url(https://cdn.frail.lol/cursors/461/70429f65-22a1-4bc0-9b79-5d85c2fb9a50.png), auto !important;
+    }
+
+    .Help_button {
+      background-color: #000;
+      color: white;
+      padding: 15px 32px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+    }
+
+    .Help_button:hover {
+      box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 40px rgb(255, 255, 255);
+    }
+
+    #helpBox {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 12px;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    #helpBox header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .closeBtn {
+      cursor: pointer;
+      color: white;
+    }
+
+    #helpBox img {
+      width: 100%;
+      margin-top: 8px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="ui">
+
+  <div id="panel">
+    <b>Oneko Playground</b>
+
+    <input id="url" placeholder="Texture URL" />
+    <button onclick="setTextureFromURL()">Load URL</button>
+    <button onclick="resetTexture()">Reset Default</button>
+  </div>
+
+  <div id="oneko"></div>
+
+  <button class="Help_button" onclick="toggleHelp()">Help</button>
+
+  <div id="helpBox">
+    <header>
+      Guide
+      <span class="closeBtn" onclick="toggleHelp()">Close</span>
+    </header>
+
+    <div>
+      <p><b>How to use:</b></p>
+      <p>1. Enter a texture URL.</p>
+      <p>2. Click "Load URL".</p>
+      <p>3. Watch the oneko update.</p>
+
+      <p><b>Tips:</b></p>
+      <p>- Make sure sizes are correct</p>
+
+      <img src="https://github.com/trxpvoidz/Oneko-Custom/blob/main/snow-oneko.png?raw=true">
+
+      <p>This is what a correct texture looks like.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function oneko() {
+
+  const nekoEl = document.getElementById("oneko");
+
+  let nekoPosX = 32;
+  let nekoPosY = 32;
+  let mousePosX = 0;
+  let mousePosY = 0;
+
+  let frameCount = 0;
+  const nekoSpeed = 10;
+
+  const spriteSets = {
+    idle: [[-3, -3]],
+    alert: [[-7, -3]],
+    scratchSelf: [[-5, 0], [-6, 0], [-7, 0]],
+    scratchWallN: [[0, 0], [0, -1]],
+    scratchWallS: [[-7, -1], [-6, -2]],
+    scratchWallE: [[-2, -2], [-2, -3]],
+    scratchWallW: [[-4, 0], [-4, -1]],
+    tired: [[-3, -2]],
+    sleeping: [[-2, 0], [-2, -1]],
+    N: [[-1, -2], [-1, -3]],
+    NE: [[0, -2], [0, -3]],
+    E: [[-3, 0], [-3, -1]],
+    SE: [[-5, -1], [-5, -2]],
+    S: [[-6, -3], [-7, -2]],
+    SW: [[-5, -3], [-6, -1]],
+    W: [[-4, -2], [-4, -3]],
+    NW: [[-1, 0], [-1, -1]]
+  };
+
+  let nekoFile =
+    "https://raw.githubusercontent.com/adryd325/oneko.js/main/oneko.gif";
+
+  function setTexture(url) {
+    nekoFile = url;
+    nekoEl.style.backgroundImage = `url(${nekoFile})`;
+  }
+
+  function setSprite(name, frame) {
+    const set = spriteSets[name] || spriteSets.idle;
+    const sprite = set[frame % set.length];
+
+    nekoEl.style.backgroundPosition =
+      `${sprite[0] * 32}px ${sprite[1] * 32}px`;
+  }
+
+  document.addEventListener("mousemove", (e) => {
+    mousePosX = e.clientX;
+    mousePosY = e.clientY;
+  });
+
+  let last = 0;
+
+  function frame(t) {
+    if (!last) last = t;
+
+    if (t - last < 100) {
+      requestAnimationFrame(frame);
+      return;
+    }
+
+    last = t;
+    frameCount++;
+
+    const dx = nekoPosX - mousePosX;
+    const dy = nekoPosY - mousePosY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < nekoSpeed || dist < 48) {
+      setSprite("idle", 0);
+    } else {
+      let dir = "";
+      dir += dy > 20 ? "N" : "";
+      dir += dy < -20 ? "S" : "";
+      dir += dx > 20 ? "W" : "";
+      dir += dx < -20 ? "E" : "";
+
+      nekoPosX -= (dx / dist) * nekoSpeed;
+      nekoPosY -= (dy / dist) * nekoSpeed;
+
+      setSprite(dir || "idle", frameCount);
+    }
+
+    nekoEl.style.left = nekoPosX + "px";
+    nekoEl.style.top = nekoPosY + "px";
+
+    requestAnimationFrame(frame);
+  }
+
+  window.setTextureFromURL = () => {
+    const url = document.getElementById("url").value;
+    if (url) setTexture(url);
+  };
+
+  window.resetTexture = () => {
+    setTexture("https://raw.githubusercontent.com/adryd325/oneko.js/main/oneko.gif");
+  };
+
+  nekoEl.style.width = "32px";
+  nekoEl.style.height = "32px";
+  nekoEl.style.position = "fixed";
+  nekoEl.style.pointerEvents = "none";
+  nekoEl.style.imageRendering = "pixelated";
+  nekoEl.style.backgroundImage = `url(${nekoFile})`;
+  nekoEl.style.zIndex = 999999;
+
+  document.body.appendChild(nekoEl);
+  requestAnimationFrame(frame);
+
+})();
+
+function toggleHelp() {
+  const box = document.getElementById("helpBox");
+  box.style.display = box.style.display === "block" ? "none" : "block";
+}
+</script>
+
+</body>
+</html>
